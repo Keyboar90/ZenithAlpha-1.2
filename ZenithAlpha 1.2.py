@@ -454,7 +454,7 @@ def analyze_and_plot():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "NKVKTFJS9MHXY9WG"
+    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -475,7 +475,7 @@ def analyze_fundamentals():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "NKVKTFJS9MHXY9WG"
+    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
     result = evaluate_stock_fundamentals_av(ticker, api_key)
     if result is not None:
         try:
@@ -550,7 +550,7 @@ def analyze_quant_strategy():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "NKVKTFJS9MHXY9WG"
+    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -702,4 +702,5 @@ def create_gui():
 # Hauptprogramm.
 
 if __name__ == "__main__":
+
     create_gui()
