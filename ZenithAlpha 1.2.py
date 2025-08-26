@@ -17,6 +17,7 @@ from tkinter import ttk  # Für erweiterte tkinter-Widgets.
 import threading  # Für die parallele Ausführung von Aufgaben.
 import time  # Für zeitbezogene Funktionen.
 from io import BytesIO  # Für die Verarbeitung von Binärdaten im Speicher.
+import math # Mathe-Tools (pi, e, Wurzeln, Logarithmen, Sinus, Fakultät usw.).
 
 # Projekt: ZenithAlpha 1.2 von Lukas Völzing. Datum: August 2025. Unternehmen: Linoz Developments.
 
@@ -58,6 +59,19 @@ def fetch_data_from_alpha_vantage(ticker, api_key):
         print()
         print(f"Error retrieving data from Alpha Vantage: {str(e)}")
         return None
+    
+# Füge eine sichere Konvertierungsfunktion hinzu.
+        
+def safe_float(x):
+    """Konvertiert robust nach float; bei None/leer -> NaN."""
+    try:
+        if x is None:
+            return math.nan
+        if isinstance(x, str) and x.strip().lower() in {"", "none", "nan", "null", "-"}:
+            return math.nan
+        return float(x)
+    except Exception:
+        return math.nan
 
 # Funktion zur Bewertung fundamentaler Aktienkennzahlen.
 
@@ -454,7 +468,7 @@ def analyze_and_plot():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
+    api_key = "XXXXXXXYYYYYYYZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -468,79 +482,91 @@ def analyze_and_plot():
         messagebox.showerror("Error", "Error retrieving the data.")
 
 def analyze_fundamentals():
-    
     # Führt die fundamentale Analyse durch.
-    
     ticker = entry_ticker.get().upper()
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
+
+    api_key = "XXXXXXXYYYYYYYZZZZ"
     result = evaluate_stock_fundamentals_av(ticker, api_key)
-    if result is not None:
-        try:
-            stock_name = result.get("Name", ticker)
-            pe = float(result.get("PERatio", "nan"))
-            pb = float(result.get("PriceToBookRatio", "nan"))
-            div_yield = float(result.get("DividendYield", "nan"))
-            score = 0
-            if pe != pe:
-                pe_text = "P/E: n/a"
-            elif pe < 15:
-                score += 1
-                pe_text = f"P/E: {pe} (cheap)"
-            elif pe > 25:
-                score -= 1
-                pe_text = f"P/E: {pe} (expensive)"
-            else:
-                pe_text = f"P/E: {pe} (fair)"
-            if pb != pb:
-                pb_text = "P/B: n/a"
-            elif pb < 1:
-                score += 1
-                pb_text = f"P/B: {pb} (undervalued)"
-            elif pb > 3:
-                score -= 1
-                pb_text = f"P/B: {pb} (overvalued)"
-            else:
-                pb_text = f"P/B: {pb} (fair)"
-            if div_yield != div_yield:
-                div_text = "Dividend Yield: n/a"
-            elif div_yield > 0.03:
-                score += 1
-                div_text = f"Dividend Yield: {div_yield:.2%} (attractive)"
-            else:
-                div_text = f"Dividend Yield: {div_yield:.2%} (low)"
-            if score >= 2:
-                verdict = "Undervalued! ✅"
-                verdict_color = "green"
-            elif score <= -1:
-                verdict = "Overvalued! ❌"
-                verdict_color = "red"
-            else:
-                verdict = "Fairly Valued! ⚖️"
-                verdict_color = "orange"
-            result_window = tk.Toplevel(root)
-            result_window.title(f"Fundamental Analysis: {ticker}")
-            width, height = 500, 350
-            screen_width = result_window.winfo_screenwidth()
-            screen_height = result_window.winfo_screenheight()
-            x = (screen_width // 2) - (width // 2)
-            y = (screen_height // 2) - (height // 2)
-            result_window.geometry(f"{width}x{height}+{x}+{y}")
-            result_window.resizable(False, False)
-            tk.Label(result_window, text=f"Analysis for {stock_name} ({ticker})", font=("Arial", 16, "bold")).pack(pady=15)
-            tk.Label(result_window, text=pe_text, font=("Arial", 12)).pack(pady=5)
-            tk.Label(result_window, text=pb_text, font=("Arial", 12)).pack(pady=5)
-            tk.Label(result_window, text=div_text, font=("Arial", 12)).pack(pady=5)
-            tk.Label(
-                result_window,
-                text=verdict,
-                font=("Arial", 16, "bold"),
-                fg=verdict_color
-            ).pack(pady=20)
-        except Exception as e:
-            messagebox.showerror("Error", f"Error analyzing fundamentals: {e}")
+    if result is None:
+        messagebox.showerror("Error", "No fundamental data available.")
+        return
+
+    try:
+        stock_name = result.get("Name") or ticker
+
+        # WICHTIG: sichere Konvertierung + korrekte Keys
+        pe        = safe_float(result.get("PERatio"))
+        pb        = safe_float(result.get("PriceToBook") or result.get("PriceToBookRatio"))
+        div_yield = safe_float(result.get("DividendYield"))
+
+        score = 0
+
+        # P/E
+        if math.isnan(pe):
+            pe_text = "P/E: n/a"
+        elif pe < 15:
+            score += 1
+            pe_text = f"P/E: {pe:.2f} (cheap)"
+        elif pe > 25:
+            score -= 1
+            pe_text = f"P/E: {pe:.2f} (expensive)"
+        else:
+            pe_text = f"P/E: {pe:.2f} (fair)"
+
+        # P/B
+        if math.isnan(pb):
+            pb_text = "P/B: n/a"
+        elif pb < 1:
+            score += 1
+            pb_text = f"P/B: {pb:.2f} (undervalued)"
+        elif pb > 3:
+            score -= 1
+            pb_text = f"P/B: {pb:.2f} (overvalued)"
+        else:
+            pb_text = f"P/B: {pb:.2f} (fair)"
+
+        # Dividend Yield
+        if math.isnan(div_yield):
+            div_text = "Dividend Yield: n/a"
+        elif div_yield > 0.03:
+            score += 1
+            div_text = f"Dividend Yield: {div_yield:.2%} (attractive)"
+        else:
+            div_text = f"Dividend Yield: {div_yield:.2%} (low)"
+
+        # Verdict
+        if score >= 2:
+            verdict = "Undervalued! ✅"
+            verdict_color = "green"
+        elif score <= -1:
+            verdict = "Overvalued! ❌"
+            verdict_color = "red"
+        else:
+            verdict = "Fairly Valued! ⚖️"
+            verdict_color = "orange"
+
+        # UI
+        result_window = tk.Toplevel(root)
+        result_window.title(f"Fundamental Analysis: {ticker}")
+        width, height = 500, 350
+        screen_width = result_window.winfo_screenwidth()
+        screen_height = result_window.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        result_window.geometry(f"{width}x{height}+{x}+{y}")
+        result_window.resizable(False, False)
+
+        tk.Label(result_window, text=f"Analysis for {stock_name} ({ticker})", font=("Arial", 16, "bold")).pack(pady=15)
+        tk.Label(result_window, text=pe_text, font=("Arial", 12)).pack(pady=5)
+        tk.Label(result_window, text=pb_text, font=("Arial", 12)).pack(pady=5)
+        tk.Label(result_window, text=div_text, font=("Arial", 12)).pack(pady=5)
+        tk.Label(result_window, text=verdict, font=("Arial", 16, "bold"), fg=verdict_color).pack(pady=20)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Error analyzing fundamentals: {e}")
 
 def analyze_quant_strategy():
     
@@ -550,7 +576,7 @@ def analyze_quant_strategy():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXXXXXXYYYYYYYZZZZZZZZ"
+    api_key = "XXXXXXXYYYYYYYZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -702,5 +728,4 @@ def create_gui():
 # Hauptprogramm.
 
 if __name__ == "__main__":
-
     create_gui()
