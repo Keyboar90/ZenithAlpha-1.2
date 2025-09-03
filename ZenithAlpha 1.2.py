@@ -1,5 +1,5 @@
 # Importiere benötigte Module.
-import pandas as pd  # Für Datenmanipulation und -analyse.
+import pandas as pd  # Für Datenmanipulation und Datenanalyse.
 import numpy as np  # Für numerische Berechnungen.
 import tkinter as tk  # Für die Erstellung grafischer Benutzeroberflächen (GUI).
 from tkinter import messagebox  # Für die Anzeige von Pop-up-Nachrichten.
@@ -18,8 +18,10 @@ import threading  # Für die parallele Ausführung von Aufgaben.
 import time  # Für zeitbezogene Funktionen.
 from io import BytesIO  # Für die Verarbeitung von Binärdaten im Speicher.
 import math # Mathe-Tools (pi, e, Wurzeln, Logarithmen, Sinus, Fakultät usw.).
+import webbrowser # Modul, um Webbrowser von Python aus zu steuern, z. B. Webseiten öffnen.
+from matplotlib.ticker import StrMethodFormatter  # Importiert einen Formatter, um Achsenbeschriftungen mit Python-Style-Strings zu formatieren, z.B. '${x:1.2f}' für Währungswerte.
 
-# Projekt: ZenithAlpha 1.2 von Lukas Völzing. Datum: August 2025. Unternehmen: Linoz Developments.
+# Projekt: ZenithAlpha 1.2 von Lukas Völzing. Datum: September 2025. Unternehmen: Linoz Developments. =============================================================================
 
 print()
 print("Welcome to ZenithAlpha from Linoz Developments. Version 1.2. Developer: Lukas Voelzing")
@@ -60,6 +62,7 @@ def fetch_data_from_alpha_vantage(ticker, api_key):
         print(f"Error retrieving data from Alpha Vantage: {str(e)}")
         return None
     
+
 # Füge eine sichere Konvertierungsfunktion hinzu.
         
 def safe_float(x):
@@ -78,7 +81,8 @@ def safe_float(x):
 def evaluate_stock_fundamentals_av(ticker, api_key):
     """
     Holt Alpha Vantage OVERVIEW und berechnet eine robuste, fehlertolerante Investment-Bewertung.
-    Gibt zurück:
+    Gibt folgendes zurück:
+    
       - Kern-Kennzahlen
       - Score (0–100)
       - Empfehlung (BUY/HOLD/SELL)
@@ -277,7 +281,7 @@ def evaluate_stock_fundamentals_av(ticker, api_key):
         print(f"Error in fundamental analysis: {str(e)}")
         return None
 
-# Technische Indikatoren.
+# Technische Indikatoren. ---------------------------------------------------
 
 def calculate_sma(data, window=50):
     
@@ -329,7 +333,7 @@ def backtest_strategy(data):
     data['Portfolio_Value'] = (1 + data['Returns']).cumprod() * 1000
     return data
 
-# Maschinelles Lernen.
+# Maschinelles Lernen. ---------------------------------------------------
 
 def train_ml_model(data):
     
@@ -373,56 +377,67 @@ def backtest_quant_strategy(data):
     data['Quant_Portfolio'] = (1 + data['Quant_Returns']).cumprod() * 1000
     return data
 
-def fetch_and_display_gold_chart():
-    
-    # Lädt und zeigt den Goldpreis-Chart an.
-    
-    try:
-        url = "//charts.gold.de/b/goldkurs_24stunden_usd.jpg"
-        response = requests.get(f"https:{url}")
-        img_data = BytesIO(response.content)
-        img = Image.open(img_data)
-        img = img.resize((1000, 700), Image.Resampling.LANCZOS)
-        img_tk = ImageTk.PhotoImage(img)
-        chart_window = tk.Toplevel(root)
-        chart_window.title("Gold Chart (USD)")
-        width, height = 1000, 700
-        screen_width = chart_window.winfo_screenwidth()
-        screen_height = chart_window.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        chart_window.geometry(f"{width}x{height}+{x}+{y}")
-        chart_label = tk.Label(chart_window, image=img_tk)
-        chart_label.image = img_tk
-        chart_label.pack(pady=10)
-    except Exception as e:
-        messagebox.showerror("Error", f"Error loading Gold chart: {e}")
+def create_chart_window(title: str, image_url: str, width: int = 1000, height: int = 700):
+    """
+    Erstellt ein zentriertes Fenster mit einem Chart-Bild.
 
-def fetch_and_display_silver_chart():
-    
-    # Lädt und zeigt den Silberpreis-Chart an.
-    
+    Args:
+        title (str): Titel des Fensters.
+        image_url (str): URL des Chart-Bildes.
+        width (int): Breite des Fensters (Standard: 1000).
+        height (int): Höhe des Fensters (Standard: 700).
+    """
     try:
-        url = "//charts.gold.de/b/silberkurs_24stunden_usd.jpg"
-        response = requests.get(f"https:{url}")
-        img_data = BytesIO(response.content)
-        img = Image.open(img_data)
-        width, height = 1000, 700
+        
+        # Bilddaten abrufen.
+        
+        response = requests.get(f"https:{image_url}")
+        response.raise_for_status()  # Wirft einen Fehler bei HTTP-Problemen.
+
+        # Bild laden und skalieren.
+        
+        img = Image.open(BytesIO(response.content))
         img = img.resize((width, height), Image.Resampling.LANCZOS)
         img_tk = ImageTk.PhotoImage(img)
+
+        # Fenster erstellen und zentrieren.
+        
         chart_window = tk.Toplevel(root)
-        chart_window.title("Silver Chart (USD)")
+        chart_window.title(title)
+        chart_window.resizable(False, False)
+
+        # Position berechnen (zentriert).
+        
         screen_width = chart_window.winfo_screenwidth()
         screen_height = chart_window.winfo_screenheight()
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
         chart_window.geometry(f"{width}x{height}+{x}+{y}")
-        chart_window.resizable(False, False)
+
+        # Bild anzeigen.
+        
         chart_label = tk.Label(chart_window, image=img_tk)
-        chart_label.image = img_tk
+        chart_label.image = img_tk  # Referenz halten.
         chart_label.pack(pady=10)
+
+    except requests.exceptions.RequestException as e:
+        messagebox.showerror("Network Error", f"Failed to load chart: {e}")
     except Exception as e:
-        messagebox.showerror("Error", f"Error loading Silver chart: {e}")
+        messagebox.showerror("Error", f"Error loading chart: {e}")
+
+def fetch_and_display_gold_chart():
+    """Lädt und zeigt den Goldpreis-Chart an."""
+    create_chart_window(
+        title="Gold Chart (USD)",
+        image_url="//charts.gold.de/b/goldkurs_24stunden_usd.jpg"
+    )
+
+def fetch_and_display_silver_chart():
+    """Lädt und zeigt den Silberpreis-Chart an."""
+    create_chart_window(
+        title="Silver Chart (USD)",
+        image_url="//charts.gold.de/b/silberkurs_24stunden_usd.jpg"
+    )
 
 def show_imprint():
     
@@ -458,7 +473,7 @@ def show_imprint():
     )
     label.pack(expand=True, pady=30, padx=20)
 
-# GUI Funktionen.
+# GUI Funktionen. ---------------------------------------------------
 
 def analyze_and_plot():
     
@@ -468,7 +483,7 @@ def analyze_and_plot():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXXYYYYYYYZZZZ"
+    api_key = "XXXXXXYYYYYYZZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -482,13 +497,15 @@ def analyze_and_plot():
         messagebox.showerror("Error", "Error retrieving the data.")
 
 def analyze_fundamentals():
+    
     # Führt die fundamentale Analyse durch.
+    
     ticker = entry_ticker.get().upper()
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
 
-    api_key = "XXXXXXXYYYYYYYZZZZ"
+    api_key = "XXXXXXYYYYYYZZZZZZ"
     result = evaluate_stock_fundamentals_av(ticker, api_key)
     if result is None:
         messagebox.showerror("Error", "No fundamental data available.")
@@ -497,14 +514,16 @@ def analyze_fundamentals():
     try:
         stock_name = result.get("Name") or ticker
 
-        # WICHTIG: sichere Konvertierung + korrekte Keys
+        # WICHTIG: sichere Konvertierung + korrekte Keys.
+        
         pe        = safe_float(result.get("PERatio"))
         pb        = safe_float(result.get("PriceToBook") or result.get("PriceToBookRatio"))
         div_yield = safe_float(result.get("DividendYield"))
 
         score = 0
 
-        # P/E
+        # P/E:
+        
         if math.isnan(pe):
             pe_text = "P/E: n/a"
         elif pe < 15:
@@ -516,7 +535,8 @@ def analyze_fundamentals():
         else:
             pe_text = f"P/E: {pe:.2f} (fair)"
 
-        # P/B
+        # P/B:
+        
         if math.isnan(pb):
             pb_text = "P/B: n/a"
         elif pb < 1:
@@ -528,7 +548,8 @@ def analyze_fundamentals():
         else:
             pb_text = f"P/B: {pb:.2f} (fair)"
 
-        # Dividend Yield
+        # Dividend Yield:
+        
         if math.isnan(div_yield):
             div_text = "Dividend Yield: n/a"
         elif div_yield > 0.03:
@@ -537,7 +558,8 @@ def analyze_fundamentals():
         else:
             div_text = f"Dividend Yield: {div_yield:.2%} (low)"
 
-        # Verdict
+        # Verdict:
+        
         if score >= 2:
             verdict = "Undervalued! ✅"
             verdict_color = "green"
@@ -548,7 +570,8 @@ def analyze_fundamentals():
             verdict = "Fairly Valued! ⚖️"
             verdict_color = "orange"
 
-        # UI
+        # UI:
+        
         result_window = tk.Toplevel(root)
         result_window.title(f"Fundamental Analysis: {ticker}")
         width, height = 500, 350
@@ -576,7 +599,7 @@ def analyze_quant_strategy():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXXYYYYYYYZZZZ"
+        api_key = "XXXXXXYYYYYYZZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -664,68 +687,117 @@ def classify_stock_opinion(data):
         recommendation = "HOLD"
     return recommendation, last_pred
 
-# GUI-Erstellung mit allen Funktionen.
+# Funktion zum Öffnen der Aktienliste.
+
+def open_stocklist():
+    url = "https://stockanalysis.com/stocks/"
+    webbrowser.open(url)
+
+# GUI-Erstellung mit allen Funktionen. ---------------------------------------------------
 
 def create_gui():
-    global root, entry_ticker, canvas_plot
+    
+    global root, entry_ticker, canvas_plot, logos
     root = tk.Tk()
     root.title("Home: ZenithAlpha - Quantitative Investment Tool for Hedgefunds and Investors")
-    root.configure(bg="#f0f0f0")
+    root.configure(bg="#ecc74c")
+
+    logos = []  # Liste, damit die Bildobjekte nicht vom Garbage Collector gelöscht werden.
+
     default_font = ("Helvetica", 12)
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    window_width = int(screen_width * 0.8)
-    window_height = int(screen_height * 0.8)
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
-    welcome_label = tk.Label(root, text="Welcome to ZenithAlpha from Linoz Developments. Version 1.2. Developer: Lukas Völzing", font=("Helvetica", 18, "bold"), bg="#f0f0f0", fg="#000000")
+
+    # Startet die GUI direkt im Vollbild.
+    
+    root.attributes("-fullscreen", True)
+
+    # Mit ESC kann man den Vollbildmodus wieder verlassen.
+
+    root.bind("<Escape>", lambda e: root.attributes("-fullscreen", False))
+
+    # Welcome Label.
+    
+    welcome_label = tk.Label(
+        root,
+        text="Welcome to ZenithAlpha from Linoz Developments. Version 1.2. Developer: Lukas Völzing",
+        font=("Helvetica", 18, "bold"),
+        bg="#f0f0f0",
+        fg="#000000"
+    )
     welcome_label.pack(pady=20)
+
+    # Logo Frame.
+    
     logo_frame = tk.Frame(root, bg="#f0f0f0")
     logo_frame.pack(pady=10)
-    logo_path_1 = "C:\\Studium Fachhochschule Frankfurt\\X) Private Projekte\\2) Python\\1) Zenith Alpha\\Z) Logo.png"
-    if os.path.exists(logo_path_1):
-        try:
-            logo_image_1 = Image.open(logo_path_1)
-            logo_image_1 = logo_image_1.resize((330, 330), Image.Resampling.LANCZOS)
-            logo_photo_1 = ImageTk.PhotoImage(logo_image_1)
-            logo_label_1 = tk.Label(logo_frame, image=logo_photo_1, bg="#f0f0f0")
-            logo_label_1.image = logo_photo_1
-            logo_label_1.pack(side=tk.LEFT, padx=10)
-        except Exception as e:
-            print(f"Error loading the first logo: {e}")
-    logo_path_2 = "C:\\Studium Fachhochschule Frankfurt\\X) Private Projekte\\2) Python\\1) Zenith Alpha\\Z) Linoz Developments.png"
-    if os.path.exists(logo_path_2):
-        try:
-            logo_image_2 = Image.open(logo_path_2)
-            logo_image_2 = logo_image_2.resize((330, 260), Image.Resampling.LANCZOS)
-            logo_photo_2 = ImageTk.PhotoImage(logo_image_2)
-            logo_label_2 = tk.Label(logo_frame, image=logo_photo_2, bg="#f0f0f0")
-            logo_label_2.image = logo_photo_2
-            logo_label_2.pack(side=tk.LEFT, padx=10)
-        except Exception as e:
-            print(f"Error loading the second logo: {e}")
-    input_frame = tk.Frame(root, bg="#f0f0f0")
+
+    # Relativer Pfad zum pictures-Ordner.
+    
+    pictures_dir = os.path.join(os.path.dirname(__file__), "pictures")
+
+    if not os.path.exists(pictures_dir):
+        print(f"ERROR: Directory 'pictures' not found: {pictures_dir}")
+
+    # Alle Logos für die GUI laden.
+    
+    for filename, size in [("Z) Logo.png", (450, 450)), ("Z) Linoz Developments.png", (450, 350)), ("Z) Meeting.png", (450, 300))]:
+        path = os.path.join(pictures_dir, filename)
+        if os.path.exists(path):
+            try:
+                img = Image.open(path)
+                img = img.resize(size, Image.Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+                logos.append(photo)
+                label = tk.Label(logo_frame, image=photo, bg="#ffffff")
+                label.pack(side=tk.LEFT, padx=10)
+            except Exception as e:
+                print(f"ERROR during loading: {filename}: {e}")
+        else:
+            print(f"ERROR: File not found: {path}")
+
+    # Input Frame.
+    
+    input_frame = tk.Frame(root, bg="#ffffff")
     input_frame.pack(pady=20)
-    label_ticker = tk.Label(input_frame, text="Please enter stock ticker:", font=default_font, bg="#ddd9d9")
+
+    label_ticker = tk.Label(input_frame, text="Please enter stock ticker:", font=default_font, bg="#f1c32b")
     label_ticker.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+
     entry_ticker = tk.Entry(input_frame, font=default_font, width=30)
     entry_ticker.grid(row=0, column=1, padx=5, pady=5)
-    btn_analyze = tk.Button(input_frame, text="Technical Analysis & Backtest", command=analyze_and_plot, font=default_font, bg="#4CAF50", fg="white")
-    btn_analyze.grid(row=1, column=0, padx=5, pady=10, sticky=tk.E+tk.W)
-    btn_fundamental = tk.Button(input_frame, text="Fundamental Analysis", command=analyze_fundamentals, font=default_font, bg="#2196F3", fg="white")
-    btn_fundamental.grid(row=1, column=1, padx=5, pady=10, sticky=tk.E+tk.W)
-    btn_quant = tk.Button(input_frame, text="Quantitative Strategy (ML + Technical)", command=analyze_quant_strategy, font=default_font, bg="#E68D09", fg="white")
-    btn_quant.grid(row=1, column=2, padx=5, pady=10, sticky=tk.E+tk.W)
-    btn_gold_chart = tk.Button(input_frame, text="Show Gold Price Chart", command=fetch_and_display_gold_chart, font=default_font, bg="#FFD700", fg="black")
-    btn_gold_chart.grid(row=4, column=0, columnspan=3, sticky=tk.E+tk.W, padx=5, pady=10)
-    btn_silver_chart = tk.Button(input_frame, text="Show Silver Chart", command=fetch_and_display_silver_chart, font=default_font, bg="#C0C0C0", fg="black")
-    btn_silver_chart.grid(row=7, column=0, columnspan=3, sticky=tk.E+tk.W, padx=5, pady=10)
-    btn_imprint = tk.Button(input_frame, text="Imprint", command=show_imprint, font=default_font, bg="#2C2828", fg="white")
-    btn_imprint.grid(row=3, column=0, columnspan=4, sticky=tk.E + tk.W, padx=6, pady=10)
-    root.mainloop()
 
-# Hauptprogramm.
+    # Buttons.
+    
+    btn_analyze = tk.Button(input_frame, text="Technical Analysis & Backtest", command=analyze_and_plot,
+                            font=default_font, bg="#4CAF50", fg="white")
+    btn_analyze.grid(row=1, column=0, padx=5, pady=10, sticky=tk.E+tk.W)
+
+    btn_fundamental = tk.Button(input_frame, text="Fundamental Analysis", command=analyze_fundamentals,
+                                font=default_font, bg="#2196F3", fg="white")
+    btn_fundamental.grid(row=1, column=1, padx=5, pady=10, sticky=tk.E+tk.W)
+
+    btn_quant = tk.Button(input_frame, text="Quantitative Strategy (ML + Technical)", command=analyze_quant_strategy,
+                          font=default_font, bg="#E68D09", fg="white")
+    btn_quant.grid(row=1, column=2, padx=5, pady=10, sticky=tk.E+tk.W)
+
+    btn_gold_chart = tk.Button(input_frame, text="Gold Chart", command=fetch_and_display_gold_chart,
+                               font=default_font, bg="#FFD700", fg="black")
+    btn_gold_chart.grid(row=5, column=0, columnspan=3, sticky=tk.E+tk.W, padx=5, pady=10)
+
+    btn_silver_chart = tk.Button(input_frame, text="Silver Chart", command=fetch_and_display_silver_chart,
+                                 font=default_font, bg="#F3F0F0", fg="black")
+    btn_silver_chart.grid(row=6, column=0, columnspan=3, sticky=tk.E+tk.W, padx=5, pady=10)
+
+    btn_imprint = tk.Button(input_frame, text="Imprint", command=show_imprint, font=default_font, bg="#2C2828",
+                            fg="white")
+    btn_imprint.grid(row=7, column=0, columnspan=4, sticky=tk.E + tk.W, padx=6, pady=10)
+
+    btn_allstocks = tk.Button(input_frame, text="Search for stocks with ticker", command=open_stocklist,
+                          font=default_font, bg="#B91D1D", fg="white", relief=tk.RAISED, bd=3, cursor="hand2")
+    btn_allstocks.grid(row=3, column=0, columnspan=4, sticky=tk.E + tk.W, padx=5, pady=10)
+
+    root.mainloop()
+    
+    # Hauptprogramm starten.
 
 if __name__ == "__main__":
     create_gui()
