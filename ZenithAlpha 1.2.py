@@ -29,6 +29,7 @@ print("Welcome to ZenithAlpha from Linoz Developments. Version 1.2. Developer: L
 # Funktion zum Abrufen von historischen Aktienkursdaten von Alpha Vantage.
 
 def fetch_data_from_alpha_vantage(ticker, api_key):
+    
     try:
         
         # API-URL für tägliche Zeitreihendaten.
@@ -62,10 +63,10 @@ def fetch_data_from_alpha_vantage(ticker, api_key):
         print(f"Error retrieving data from Alpha Vantage: {str(e)}")
         return None
     
-
 # Füge eine sichere Konvertierungsfunktion hinzu.
         
 def safe_float(x):
+    
     """Konvertiert robust nach float; bei None/leer -> NaN."""
     try:
         if x is None:
@@ -426,6 +427,7 @@ def create_chart_window(title: str, image_url: str, width: int = 1000, height: i
         messagebox.showerror("Error", f"Error loading chart: {e}")
 
 def fetch_and_display_gold_chart():
+    
     """Lädt und zeigt den Goldpreis-Chart an."""
     create_chart_window(
         title="Gold Chart (USD)",
@@ -433,6 +435,7 @@ def fetch_and_display_gold_chart():
     )
 
 def fetch_and_display_silver_chart():
+    
     """Lädt und zeigt den Silberpreis-Chart an."""
     create_chart_window(
         title="Silver Chart (USD)",
@@ -483,7 +486,7 @@ def analyze_and_plot():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-    api_key = "XXXXXXYYYYYYZZZZZZ"
+    api_key = "XXXXXYYYYYZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -491,7 +494,7 @@ def analyze_and_plot():
         data = calculate_macd(data)
         data = calculate_bollinger_bands(data)
         data = backtest_strategy(data)
-        plot_data(data, title="Technical Analysis & Backtest")
+        plot_data(data, title=f"Technical Analysis & Backtest: {ticker}")
         display_investment_opportunities(data)
     else:
         messagebox.showerror("Error", "Error retrieving the data.")
@@ -505,7 +508,7 @@ def analyze_fundamentals():
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
 
-    api_key = "XXXXXXYYYYYYZZZZZZ"
+    api_key = "XXXXXYYYYYZZZZZ"
     result = evaluate_stock_fundamentals_av(ticker, api_key)
     if result is None:
         messagebox.showerror("Error", "No fundamental data available.")
@@ -599,7 +602,7 @@ def analyze_quant_strategy():
     if not ticker:
         messagebox.showerror("Error", "Please enter a valid ticker symbol!")
         return
-        api_key = "XXXXXXYYYYYYZZZZZZ"
+    api_key = "XXXXXYYYYYZZZZZ"
     data = fetch_data_from_alpha_vantage(ticker, api_key)
     if data is not None:
         data = calculate_sma(data)
@@ -608,7 +611,7 @@ def analyze_quant_strategy():
         data = calculate_bollinger_bands(data)
         data, model = train_ml_model(data)
         data = backtest_quant_strategy(data)
-        plot_data(data, title="Quantitative Strategy (ML & Technical)")
+        plot_data(data, title=f"Quantitative Strategy (ML & Technical): {ticker}")
         recommendation, last_pred = classify_stock_opinion(data)
         pred_percent = round(last_pred * 100, 2)
         messagebox.showinfo(
@@ -623,38 +626,65 @@ def analyze_quant_strategy():
 
 def plot_data(data, title="Analysis"):
     
-    # Plottet die Daten in einem Matplotlib-Diagramm.
+    # Erstelle ein neues Fenster für das Diagramm.
     
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(data.index, data['Close'], label='Closing price', color='blue')
-    ax.yaxis.set_major_formatter('${x:1.2f}')
+    plot_window = tk.Toplevel()
+    plot_window.title(title)
+    plot_window.geometry("1200x800")  # Größe des neuen Fensters.
+
+    # Erstelle eine neue Figur mit größerer Größe.
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Plot der Schlusskurse.
+    
+    ax.plot(data.index, data['Close'], label='Closing price', color='blue', linewidth=2)
+
+    # Formatierung der Y-Achse als Währung in USD.
+    
+    ax.yaxis.set_major_formatter(StrMethodFormatter('${x:,.2f}'))
+
+    # Plot der technischen Indikatoren.
+    
     if 'SMA_50' in data.columns:
-        ax.plot(data.index, data['SMA_50'], label='50-day SMA', color='red')
+        ax.plot(data.index, data['SMA_50'], label='50-day SMA', color='red', linewidth=1.5)
     if 'MACD' in data.columns and 'MACD_Signal' in data.columns:
-        ax.plot(data.index, data['MACD'], label='MACD', color='green')
-        ax.plot(data.index, data['MACD_Signal'], label='MACD Signal', color='orange')
+        ax.plot(data.index, data['MACD'], label='MACD', color='green', linewidth=1.5)
+        ax.plot(data.index, data['MACD_Signal'], label='MACD Signal', color='orange', linewidth=1.5)
     if 'Bollinger_Upper' in data.columns and 'Bollinger_Lower' in data.columns:
-        ax.plot(data.index, data['Bollinger_Upper'], label='Bollinger Upper', color='purple', linestyle='--')
-        ax.plot(data.index, data['Bollinger_Lower'], label='Bollinger Lower', color='purple', linestyle='--')
+        ax.plot(data.index, data['Bollinger_Upper'], label='Bollinger Upper', color='purple', linestyle='--', linewidth=1.5)
+        ax.plot(data.index, data['Bollinger_Lower'], label='Bollinger Lower', color='purple', linestyle='--', linewidth=1.5)
     if 'ML_Prediction' in data.columns:
         ax.plot(
             data.index,
             data['ML_Prediction'] * data['Close'].shift(1) + data['Close'].shift(1),
-            label='ML Prediction (Price)', color='green', linestyle='--'
+            label='ML Prediction (Price)', color='green', linestyle='--', linewidth=1.5
         )
-    ax.set_title(title)
-    ax.legend()
+
+    # Titel und Legende.
+    
+    ax.set_title(title, fontsize=16, pad=20)
+    ax.legend(fontsize=12, loc='upper left')
+
+    # Beschriftung der Datenpunkte (optional, nur alle 20 Punkte).
+    
     for i, price in enumerate(data['Close']):
-        if i % 10 == 0:
-            ax.text(data.index[i], price, f'${price:.2f}', color='blue', fontsize=8)
-    global canvas_plot
-    try:
-        canvas_plot.get_tk_widget().destroy()
-    except NameError:
-        pass
-    canvas_plot = FigureCanvasTkAgg(fig, master=root)
+        if i % 20 == 0:
+            ax.text(data.index[i], price, f'${price:,.2f}', color='blue', fontsize=9, bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+
+    # Rotieren der X-Achsen-Beschriftung für bessere Lesbarkeit.
+    
+    plt.xticks(rotation=45)
+
+    # Layout anpassen, um Überlappungen zu vermeiden.
+    
+    plt.tight_layout()
+
+    # Diagramm in das neue Fenster einbetten.
+    
+    canvas_plot = FigureCanvasTkAgg(fig, master=plot_window)
     canvas_plot.draw()
-    canvas_plot.get_tk_widget().pack(pady=10)
+    canvas_plot.get_tk_widget().pack(pady=20, fill=tk.BOTH, expand=True)
 
 def display_investment_opportunities(data):
     
@@ -690,6 +720,7 @@ def classify_stock_opinion(data):
 # Funktion zum Öffnen der Aktienliste.
 
 def open_stocklist():
+    
     url = "https://stockanalysis.com/stocks/"
     webbrowser.open(url)
 
@@ -706,7 +737,7 @@ def create_gui():
 
     default_font = ("Helvetica", 12)
 
-    # Startet die GUI direkt im Vollbild.
+    # Startet die GUI direkt im Vollbildmodus.
     
     root.attributes("-fullscreen", True)
 
@@ -754,7 +785,7 @@ def create_gui():
         else:
             print(f"ERROR: File not found: {path}")
 
-    # Input Frame.
+    # Input Frames.
     
     input_frame = tk.Frame(root, bg="#ffffff")
     input_frame.pack(pady=20)
@@ -800,4 +831,5 @@ def create_gui():
     # Hauptprogramm starten.
 
 if __name__ == "__main__":
+    
     create_gui()
