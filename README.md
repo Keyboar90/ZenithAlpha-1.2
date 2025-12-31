@@ -20,4 +20,4 @@ This project is licensed under the **Creative Commons BY-NC-ND 4.0** license.
 
 License text: [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-© 2025 Keyboar90 / Lukas Völzing
+© 2026 Keyboar90 / Lukas Völzing
